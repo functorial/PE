@@ -1,0 +1,51 @@
+;;Project Euler 9.
+;
+; Returns the Pythagorean triples which sum to sum-equal.
+(define (triples sum-equal)
+  (flatmap (lambda (c)
+	     (flatmap (lambda (b) 
+			(flatmap (lambda (a) 
+				   (if (and (= sum-equal (+ a b c))
+					    (= (square c) (+ (square a) (square b))))
+				       (list (list a b c))
+				       nil))
+			     (enumerate-interval 1 (min (- sum-equal (+ b c)) b)) ))
+		      (enumerate-interval 2 (min (- (- sum-equal 1) c) c)) ))
+	   (enumerate-interval (inexact->exact (+ 2 (/ sum-equal 3))) (- sum-equal 3)) ))
+
+;;Project Euler 10
+;v1
+(define (sum-primes up-to)
+  (define (primes up-to)
+    (define (loop up-to current prime-list)
+      (define (coprime? x numbers)
+	(cond ((null? numbers) true)
+	      ((divides? (car numbers) x) false)
+	      (else (coprime? x (cdr numbers)))))
+      (cond ((< up-to current) prime-list)
+	    ((coprime? current prime-list) (loop up-to (+ 1 current) (cons current prime-list)))
+	    (else (loop up-to (+ 1 current) prime-list))))
+    (loop up-to 2 nil))
+  (accumulate + 0 (primes up-to)))
+;
+;v2
+;Improved coprime.  Keeps a running sum instead of accumulating a set.
+(define (sum-primes up-to)
+    (define (square x) (* x x))
+    (define (divides? d n) (= 0 (remainder n d)))
+    (define (loop up-to current prime-list accum)
+      (define (coprime? x numbers)
+	(cond ((null? numbers) true)
+	      ((> (square (car numbers)) x) true)
+	      ((divides? (car numbers) x) false)
+	      (else (coprime? x (cdr numbers)))))
+      (cond ((< up-to current) 
+	     accum)
+	    ((coprime? current prime-list)
+	     (loop up-to 
+		   (+ 1 current)
+		   (append prime-list (list current))
+		   (+ accum current)))
+	    (else
+	     (loop up-to (+ 1 current) prime-list accum))))
+    (loop up-to 2 nil 0))
